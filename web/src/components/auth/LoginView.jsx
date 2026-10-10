@@ -291,18 +291,8 @@ export default function LoginView({ onLogin, onRegister }) {
                     </button>
                   </div>
 
-                  {/* Quick Demo Fill & Forgot Password Row */}
-                  <div className="flex items-center justify-between text-[11px] px-1">
-                    <button
-                      type="button"
-                      onClick={() => { setEmail('ahmed@dardasha.com'); setPassword('password123'); }}
-                      className="text-cyan-400 hover:text-cyan-300 font-bold transition flex items-center gap-1"
-                      title="تعبئة حساب تجريبي فوري"
-                    >
-                      <Sparkles className="w-3 h-3 text-cyan-400" />
-                      <span>تعبئة حساب تجريبي (Demo)</span>
-                    </button>
-
+                  {/* Forgot Password Row */}
+                  <div className="flex items-center justify-end text-[11px] px-1">
                     <button
                       type="button"
                       onClick={() => setIsForgotOpen(true)}
