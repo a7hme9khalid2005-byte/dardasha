@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -87,6 +88,26 @@ app.use('/api/groups', groupsRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/gifts', giftsRoutes);
+
+// Dynamic Network Info endpoint for QR code scanner auto-discovery
+app.get('/api/network-info', (req, res) => {
+  let localIp = 'localhost';
+  try {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          localIp = iface.address;
+          break;
+        }
+      }
+      if (localIp !== 'localhost') break;
+    }
+  } catch (e) {
+    console.error('Failed to detect network IP:', e);
+  }
+  res.json({ localIp, port: PORT });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

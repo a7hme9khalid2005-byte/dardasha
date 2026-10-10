@@ -6,6 +6,7 @@ import {
 import RegisterModal from './RegisterModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import { api, API_BASE } from '../../services/api';
+import QRCode from 'qrcode';
 
 export default function LoginView({ onLogin, onRegister }) {
   const [authMode, setAuthMode] = useState('password'); // 'password', 'qr'
@@ -155,13 +156,57 @@ export default function LoginView({ onLogin, onRegister }) {
   };
 
   // Dynamic App URL for standard phone camera scanning & mobile PWA installation
-  const appInstallUrl = (typeof window !== 'undefined')
-    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://192.168.0.188:3000?install=true'
-        : `${window.location.origin}?install=true`)
-    : 'https://github.com/a7hme9khalid2005-byte/dardasha';
+  const [appInstallUrl, setAppInstallUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      return isLocal ? 'http://10.10.10.51:3000?install=true' : `${window.location.origin}?install=true`;
+    }
+    return 'https://github.com/a7hme9khalid2005-byte/dardasha';
+  });
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(appInstallUrl)}&bgcolor=0f172a&color=06b6d4&margin=10`;
+  // Auto-detect local network IP dynamically from backend
+  useEffect(() => {
+    let isMounted = true;
+    const fetchNetwork = async () => {
+      if (typeof window === 'undefined') return;
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal) {
+        try {
+          const info = await api.getNetworkInfo();
+          if (info?.localIp && info.localIp !== 'localhost' && isMounted) {
+            const port = window.location.port ? `:${window.location.port}` : '';
+            setAppInstallUrl(`http://${info.localIp}${port}?install=true`);
+          }
+        } catch (e) {
+          console.warn('Network auto-detect warning:', e);
+        }
+      } else {
+        if (isMounted) {
+          setAppInstallUrl(`${window.location.origin}?install=true`);
+        }
+      }
+    };
+    fetchNetwork();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Generate crisp standard QR code whenever appInstallUrl changes
+  useEffect(() => {
+    if (!appInstallUrl) return;
+    QRCode.toDataURL(appInstallUrl, {
+      margin: 2,
+      width: 320,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      },
+      errorCorrectionLevel: 'M'
+    })
+      .then(url => setQrCodeDataUrl(url))
+      .catch(err => console.error('Failed to generate local QR code:', err));
+  }, [appInstallUrl]);
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-white flex flex-col justify-between relative overflow-hidden selection:bg-purple-500 selection:text-white">
@@ -373,35 +418,76 @@ export default function LoginView({ onLogin, onRegister }) {
                 <div className="space-y-4 text-center animate-in zoom-in-95">
                   <div className="p-4 bg-[#0a0f1d] rounded-2xl border border-cyan-500/30 flex flex-col items-center justify-center space-y-3">
                     
-                    <div className="relative group p-2 bg-white rounded-2xl shadow-xl">
-                      <img
-                        src={qrCodeUrl}
-                        alt="Dardasha Mobile App Install QR"
-                        onError={(e) => {
-                          if (!e.target.src.includes('quickchart.io')) {
-                            e.target.src = `https://quickchart.io/qr?text=${encodeURIComponent(appInstallUrl)}&size=240`;
-                          }
-                        }}
-                        className="w-52 h-52 object-contain"
-                      />
+                    <div className="relative group p-4 bg-white rounded-3xl shadow-2xl border-4 border-cyan-400/40">
+                      {qrCodeDataUrl ? (
+                        <img
+                          src={qrCodeDataUrl}
+                          alt="Dardasha Mobile App Install QR"
+                          className="w-56 h-56 object-contain"
+                        />
+                      ) : (
+                        <div className="w-56 h-56 flex flex-col items-center justify-center space-y-2 text-gray-700">
+                          <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
+                          <span className="text-xs font-bold">جاري توليد الرمز...</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Direct Copyable Link for Mobile */}
+                    <div className="w-full p-2.5 bg-slate-900/90 border border-cyan-500/30 rounded-xl text-center space-y-1.5">
+                      <span className="text-[10px] text-gray-400 block font-medium">أو افتح هذا الرابط مباشرة من متصفح هاتفك:</span>
+                      <div className="flex items-center justify-between gap-2 px-1">
+                        <span className="text-xs text-cyan-300 font-mono font-bold truncate select-all dir-ltr" style={{ direction: 'ltr' }}>
+                          {appInstallUrl}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(appInstallUrl);
+                            setCopiedLink(true);
+                            setTimeout(() => setCopiedLink(false), 2500);
+                          }}
+                          className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-bold shrink-0 transition flex items-center gap-1"
+                        >
+                          {copiedLink ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 text-green-300" />
+                              <span>تم النسخ!</span>
+                            </>
+                          ) : (
+                            <span>نسخ الرابط</span>
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="text-right w-full space-y-2 text-xs bg-slate-900/80 p-3.5 rounded-xl border border-cyan-500/20">
                       <p className="text-cyan-300 font-bold flex items-center gap-1.5 text-xs">
                         <Smartphone className="w-4 h-4 text-cyan-400 shrink-0" />
-                        <span>مسح الكود بكاميرا هاتفك لتثبيت التطبيق:</span>
+                        <span>طريقة التثبيت بكاميرا الهاتف:</span>
                       </p>
                       <ol className="text-[11px] text-gray-300 list-decimal list-inside space-y-1.5 leading-relaxed">
-                        <li>افتح <strong className="text-white">كاميرا هاتفك العادية</strong> (آيفون أو أندرويد) ووجّهها نحو هذا الرمز.</li>
-                        <li>اضغط على الرابط الأصفر الذي يظهر لك في الكاميرا لفتح المنصة.</li>
-                        <li>في المتصفح: اضغط زر <strong className="text-cyan-300">"تثبيت التطبيق"</strong> ليضاف إلى شاشة هاتفك فوراً كتطبيق كامل!</li>
+                        <li>افتح <strong className="text-white">كاميرا هاتفك العادية</strong> (آيفون أو أندرويد) ووجّهها نحو الرمز أعلاه.</li>
+                        <li>اضغط على الرابط الأصفر الذي يظهر لك على شاشة الكاميرا.</li>
+                        <li>في المتصفح: اضغط زر <strong className="text-cyan-300">"تثبيت التطبيق"</strong> ليتم تثبيته فوراً كتطبيق كامل على هاتفك!</li>
                       </ol>
                     </div>
 
                     <div className="flex items-center justify-between w-full pt-1 border-t border-white/10 text-[11px]">
-                      <span className="text-gray-400 font-mono">رابط فوري لجميع الأجهزة</span>
+                      <span className="text-gray-400 font-mono">متوافق مع جميع الهواتف</span>
                       <button 
-                        onClick={initQrSession}
+                        onClick={async () => {
+                          try {
+                            const info = await api.getNetworkInfo();
+                            if (info?.localIp && info.localIp !== 'localhost') {
+                              const port = window.location.port ? `:${window.location.port}` : '';
+                              setAppInstallUrl(`http://${info.localIp}${port}?install=true`);
+                            }
+                          } catch (e) {
+                            console.warn('Refresh error:', e);
+                          }
+                          initQrSession();
+                        }}
                         className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
                       >
                         <RefreshCw className="w-3 h-3" />

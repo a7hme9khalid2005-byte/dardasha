@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api');
+export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('dardasha_token');
@@ -324,6 +324,16 @@ export const api = {
       body: JSON.stringify({ sessionId }),
     });
     return res.json();
+  },
+
+  async getNetworkInfo() {
+    try {
+      const res = await fetch(`${API_BASE}/network-info`);
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Network info fetch error:', e);
+    }
+    return null;
   },
 
   // Item 22: Security Audit Logs
