@@ -137,13 +137,13 @@ export default function LoginView({ onLogin, onRegister }) {
     setSuccessNotice('');
 
     if (!email.trim() || !password) {
-      setError('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      setError('يرجى إدخال اسم المستخدم أو البريد الإلكتروني وكلمة المرور');
       return;
     }
 
     setLoading(true);
     try {
-      await onLogin({ email, password });
+      await onLogin({ identifier: email.trim(), email: email.trim(), password });
     } catch (err) {
       setError(err.message || 'فشل تسجيل الدخول، يرجى التحقق من البيانات');
     } finally {
@@ -298,8 +298,8 @@ export default function LoginView({ onLogin, onRegister }) {
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>البريد الإلكتروني</span>
+                    <User className="w-3.5 h-3.5" />
+                    <span>اسم المستخدم / البريد</span>
                   </button>
 
                   <button
@@ -354,15 +354,15 @@ export default function LoginView({ onLogin, onRegister }) {
                 <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
                   <div className="relative">
                     <input
-                      type="email"
-                      placeholder="البريد الإلكتروني"
+                      type="text"
+                      placeholder="اسم المستخدم (@username) أو البريد الإلكتروني"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="off"
                       required
-                      className="w-full px-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:bg-white/10 transition text-sm pl-11 text-right"
+                      className="w-full px-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:bg-white/10 transition text-sm pl-11 text-right font-mono"
                     />
-                    <Mail className="w-4 h-4 text-purple-400/60 absolute left-3.5 top-4" />
+                    <User className="w-4 h-4 text-purple-400/60 absolute left-3.5 top-4" />
                   </div>
 
                   <div className="relative">

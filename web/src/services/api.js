@@ -10,11 +10,11 @@ function getAuthHeaders() {
 
 export const api = {
   // Authentication
-  async sendRegisterOtp(email, firstName) {
+  async sendRegisterOtp(email, firstName, username) {
     const res = await fetch(`${API_BASE}/auth/register/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, firstName }),
+      body: JSON.stringify({ email, firstName, username }),
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error || 'فشل إرسال رمز التحقق');
@@ -43,11 +43,11 @@ export const api = {
     return result;
   },
 
-  async forgotPassword(email) {
+  async forgotPassword(identifier) {
     const res = await fetch(`${API_BASE}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ identifier, email: identifier }),
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error || 'فشل إرسال رمز التحقق');

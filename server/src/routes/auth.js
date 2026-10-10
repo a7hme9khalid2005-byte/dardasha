@@ -23,15 +23,20 @@ function generateToken(user) {
  */
 router.post('/register/send-otp', async (req, res) => {
   try {
-    const { email, firstName } = req.body;
+    const { email, firstName, username } = req.body;
     if (!email) {
       return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const existing = db.findUserByEmail(cleanEmail);
-    if (existing) {
-      return res.status(400).json({ error: 'هذا البريد الإلكتروني مسجل بالفعل' });
+
+    // Check if requested username is already taken
+    if (username) {
+      const cleanU = username.replace(/^@/, '').trim().toLowerCase();
+      const existingUser = db.findUserByUsername(cleanU);
+      if (existingUser) {
+        return res.status(400).json({ error: 'اسم المستخدم هذا محجوز بالفعل، يرجى اختيار اسم مستخدم آخر' });
+      }
     }
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -85,15 +90,25 @@ router.post('/register', async (req, res) => {
       otpCode 
     } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ error: 'يرجى تعبئة الحقول الأساسية (الاسم، البريد، كلمة المرور)' });
+    if (!firstName || !lastName || !email || !password || !username) {
+      return res.status(400).json({ error: 'يرجى تعبئة الحقول الأساسية (الاسم، اسم المستخدم، البريد، كلمة المرور)' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanU = username.replace(/^@/, '').trim().toLowerCase();
 
-    const existing = db.findUserByEmail(cleanEmail);
-    if (existing) {
-      return res.status(400).json({ error: 'هذا البريد الإلكتروني مسجل بالفعل' });
+    if (!cleanU || cleanU.length < 3) {
+      return res.status(400).json({ error: 'يجب ألا يقل اسم المستخدم عن 3 أحرف' });
+    }
+
+    if (!/^[a-zA-Z0-9_.]+$/.test(cleanU)) {
+      return res.status(400).json({ error: 'اسم المستخدم يجب أن يحتوي فقط على أحرف إنجليزية وأرقام وشرطة سفلية (_)' });
+    }
+
+    const formattedUsername = `@${cleanU}`;
+    const userExists = db.findUserByUsername(cleanU);
+    if (userExists) {
+      return res.status(400).json({ error: 'اسم المستخدم هذا محجوز بالفعل، يرجى اختيار اسم مستخدم آخر' });
     }
 
     if (password.length < 6) {
@@ -107,20 +122,6 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'رمز التحقق (OTP) غير صحيح أو انتهت صلاحيته' });
       }
       db.markOtpUsed(cleanEmail, otpCode);
-    }
-
-    // Process Username
-    let formattedUsername = '';
-    if (username) {
-      const cleanU = username.replace(/^@/, '').trim().toLowerCase();
-      formattedUsername = `@${cleanU}`;
-      const allUsers = db.getUsers();
-      const userExists = allUsers.some(u => u.username && u.username.toLowerCase() === formattedUsername);
-      if (userExists) {
-        return res.status(400).json({ error: 'اسم المستخدم هذا محجوز بالفعل، يرجى اختيار اسم آخر' });
-      }
-    } else {
-      formattedUsername = `@${cleanEmail.split('@')[0]}`;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -189,15 +190,43 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, isDecoyAttempt } = req.body;
+    const { email, username, identifier, password, isDecoyAttempt } = req.body;
+    const loginInput = (identifier || username || email || '').trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني وكلمة المرور' });
+    if (!loginInput || !password) {
+      return res.status(400).json({ error: 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني وكلمة المرور' });
     }
 
-    const user = db.findUserByEmail(email);
+    let user = null;
+    const cleanInput = loginInput.toLowerCase();
+
+    // 1. Try finding by username first (with or without @)
+    user = db.findUserByUsername(cleanInput);
+
+    // 2. If not found by username, try by email
     if (!user) {
-      return res.status(400).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+      const usersWithEmail = db.findUsersByEmail(cleanInput);
+      if (usersWithEmail.length === 1) {
+        user = usersWithEmail[0];
+      } else if (usersWithEmail.length > 1) {
+        // Check password against each account sharing this email
+        for (const candidate of usersWithEmail) {
+          const match = await bcrypt.compare(password, candidate.password);
+          if (match) {
+            user = candidate;
+            break;
+          }
+        }
+        if (!user) {
+          return res.status(400).json({ 
+            error: 'يوجد أكثر من حساب مسجل بهذا البريد. يرجى كتابة اسم المستخدم الخاص بك (@username) بدلاً من البريد الإلكتروني' 
+          });
+        }
+      }
+    }
+
+    if (!user) {
+      return res.status(400).json({ error: 'اسم المستخدم / البريد الإلكتروني أو كلمة المرور غير صحيحة' });
     }
 
     // Check Decoy PIN (Item 13)
@@ -251,19 +280,21 @@ router.post('/login', async (req, res) => {
  */
 router.post('/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, identifier } = req.body;
+    const input = (identifier || email || '').trim();
 
-    if (!email) {
-      return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني' });
+    if (!input) {
+      return res.status(400).json({ error: 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-    const user = db.findUserByEmail(cleanEmail);
+    const clean = input.toLowerCase();
+    const user = db.findUserByIdentifier(clean);
 
     if (!user) {
-      return res.status(404).json({ error: 'لم يتم العثور على حساب مرتبط بهذا البريد الإلكتروني' });
+      return res.status(404).json({ error: 'لم يتم العثور على حساب مرتبط بهذا الاسم أو البريد الإلكتروني' });
     }
 
+    const cleanEmail = user.email.toLowerCase();
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000;
 

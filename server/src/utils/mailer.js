@@ -254,16 +254,31 @@ export async function getTransporter() {
 
   if (smtpUser && smtpPass) {
     const isGmail = smtpUser.includes('gmail.com');
-    transporter = nodemailer.createTransport({
-      service: isGmail ? 'gmail' : process.env.SMTP_SERVICE,
-      host: process.env.SMTP_HOST || (isGmail ? 'smtp.gmail.com' : undefined),
-      port: parseInt(process.env.SMTP_PORT || (isGmail ? '465' : '587'), 10),
-      secure: isGmail || process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
+    transporter = nodemailer.createTransport(
+      isGmail
+        ? {
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
+            auth: {
+              user: smtpUser,
+              pass: smtpPass,
+            },
+            tls: {
+              rejectUnauthorized: false,
+            },
+          }
+        : {
+            service: process.env.SMTP_SERVICE,
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: {
+              user: smtpUser,
+              pass: smtpPass,
+            },
+          }
+    );
     console.log(`📧 [SMTP Mailer Ready] Configured via ${smtpUser}`);
     return transporter;
   }

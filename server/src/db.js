@@ -61,6 +61,36 @@ export const db = {
     const users = readFile(USERS_FILE);
     return users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
   },
+  findUsersByEmail: (email) => {
+    const users = readFile(USERS_FILE);
+    return users.filter(u => u.email.toLowerCase() === email.trim().toLowerCase());
+  },
+  findUserByUsername: (username) => {
+    const users = readFile(USERS_FILE);
+    const clean = String(username || '').replace(/^@/, '').trim().toLowerCase();
+    return users.find(u => {
+      const uClean = String(u.username || '').replace(/^@/, '').trim().toLowerCase();
+      return uClean === clean;
+    });
+  },
+  findUserByIdentifier: (identifier) => {
+    const users = readFile(USERS_FILE);
+    const clean = String(identifier || '').trim().toLowerCase();
+    const cleanWithoutAt = clean.replace(/^@/, '');
+
+    // 1. Try finding by username first
+    const byUsername = users.find(u => {
+      const uClean = String(u.username || '').replace(/^@/, '').trim().toLowerCase();
+      return uClean === cleanWithoutAt;
+    });
+    if (byUsername) return byUsername;
+
+    // 2. Try finding by email
+    const byEmail = users.find(u => u.email.toLowerCase() === clean);
+    if (byEmail) return byEmail;
+
+    return null;
+  },
   findUserById: (id) => {
     const users = readFile(USERS_FILE);
     return users.find(u => u.id === id);

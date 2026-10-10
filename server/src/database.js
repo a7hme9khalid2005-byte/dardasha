@@ -27,8 +27,8 @@ const UserSchema = new mongoose.Schema({
   secondName: { type: String, default: '' },
   middleName: { type: String, default: '' },
   lastName: { type: String, default: '' },
-  username: { type: String, index: true, default: '' },
-  email: { type: String, required: true, unique: true, index: true },
+  username: { type: String, required: true, unique: true, index: true },
+  email: { type: String, required: true, index: true },
   gender: { type: String, default: '' },
   country: { type: String, default: '' },
   phone: { type: String, default: '' },
@@ -150,6 +150,20 @@ export async function connectMongoDB() {
     dbState.lastConnectedAt = new Date().toISOString();
 
     console.log('✅ Connected to MongoDB Atlas Cloud (Cluster0 / dardasha) successfully!');
+
+    // Synchronize Indexes (Allow multiple accounts per email, enforce unique username)
+    try {
+      await mongoose.connection.collection('users').dropIndex('email_1');
+      console.log('🔄 [Index Update] Dropped legacy email_1 unique index to allow multiple accounts per email.');
+    } catch (e) {
+      // index might not exist or already dropped
+    }
+    try {
+      await mongoose.connection.collection('users').createIndex({ username: 1 }, { unique: true, sparse: true });
+      console.log('✅ [Index Update] Created unique username_1 index.');
+    } catch (e) {
+      // safe ignore
+    }
 
     // Fault-tolerant event listeners
     mongoose.connection.on('disconnected', () => {

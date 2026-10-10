@@ -39,7 +39,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onPasswordResetSu
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
     if (!email.trim()) {
-      setError('يرجى إدخال البريد الإلكتروني');
+      setError('يرجى إدخال اسم المستخدم أو البريد الإلكتروني');
       return;
     }
 
@@ -178,17 +178,17 @@ export default function ForgotPasswordModal({ isOpen, onClose, onPasswordResetSu
           {step === 'EMAIL' && (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <p className="text-xs text-gray-300 leading-relaxed">
-                أدخل عنوان بريدك الإلكتروني المسجل لدينا وسنرسل لك رمز تحقق سرياً مكوناً من 6 أرقام فوراً.
+                أدخل اسم المستخدم الخاص بك (@username) أو بريدك الإلكتروني المسجل وسنرسل لك رمز تحقق سرياً مكوناً من 6 أرقام.
               </p>
               
               <div className="relative">
                 <input
-                  type="email"
-                  placeholder="أدخل بريدك الإلكتروني"
+                  type="text"
+                  placeholder="اسم المستخدم (@username) أو البريد الإلكتروني"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:bg-white/10 text-sm pl-11 text-right"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:bg-white/10 text-sm pl-11 text-right font-mono"
                 />
                 <Mail className="w-4 h-4 text-purple-400/60 absolute left-3.5 top-3.5" />
               </div>

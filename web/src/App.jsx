@@ -161,8 +161,8 @@ export default function App() {
     }
   };
 
-  const handleLogin = async ({ email, password }) => {
-    const res = await api.login({ email, password });
+  const handleLogin = async ({ email, password, identifier }) => {
+    const res = await api.login({ email, password, identifier: identifier || email });
     localStorage.setItem('dardasha_token', res.token);
     setCurrentUser(res.user);
     loadContacts();

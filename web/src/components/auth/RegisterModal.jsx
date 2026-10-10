@@ -152,6 +152,22 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
       return;
     }
 
+    if (!formData.username.trim()) {
+      setError('يرجى إدخال اسم مستخدم فريد خاص بك (@username)');
+      return;
+    }
+
+    const cleanUsername = formData.username.replace(/^@/, '').trim().toLowerCase();
+    if (cleanUsername.length < 3) {
+      setError('يجب ألا يقل اسم المستخدم عن 3 أحرف');
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_.]+$/.test(cleanUsername)) {
+      setError('اسم المستخدم يجب أن يحتوي فقط على أحرف إنجليزية وأرقام وشرطة سفلية (_)');
+      return;
+    }
+
     if (!formData.email.trim()) {
       setError('يرجى إدخال البريد الإلكتروني الذي ستصلك عليه رسالة التحقق');
       return;
@@ -169,8 +185,8 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
 
     setLoading(true);
     try {
-      // Trigger OTP dispatch via Resend API
-      const res = await api.sendRegisterOtp(formData.email, formData.firstName);
+      // Trigger OTP dispatch to email
+      const res = await api.sendRegisterOtp(formData.email, formData.firstName, cleanUsername);
       if (res.debugCode) setDebugOtpCode(res.debugCode);
       setStep('OTP');
       setOtpTimer(60);
@@ -424,9 +440,12 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
 
               {/* Username (@handle) */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-cyan-300 block text-right">
-                  اسم المستخدم الفريد (@username):
-                </label>
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-bold text-cyan-300 block text-right">
+                    اسم المستخدم الخاص بك (@username) * :
+                  </label>
+                  <span className="text-[10px] text-gray-400">اسم فريد خاص بكل عميل</span>
+                </div>
                 <div className="relative">
                   <input
                     type="text"
@@ -434,9 +453,10 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
                     placeholder="مثال: ahmed_khalid"
                     value={formData.username}
                     onChange={handleChange}
+                    required
                     className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 font-mono text-left text-xs pl-8"
                   />
-                  <span className="absolute left-3 top-2.5 text-cyan-400/80 font-mono font-bold text-xs">@</span>
+                  <span className="absolute left-3 top-2.5 text-cyan-400 font-mono font-bold text-xs">@</span>
                 </div>
               </div>
 
@@ -444,7 +464,7 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <label className="font-bold text-purple-200">البريد الإلكتروني (لتأكيد الحساب ورمز OTP) *:</label>
-                  <span className="text-[10px] text-cyan-300 font-bold">يصلك عليه رمز التحقق فوراً ✉️</span>
+                  <span className="text-[10px] text-green-300 font-bold">يمكن تسجيل أكثر من حساب بنفس الإيميل ✓</span>
                 </div>
                 <div className="relative">
                   <input
@@ -454,7 +474,7 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 text-xs pl-10 text-right"
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 text-xs pl-10 text-right font-mono"
                   />
                   <Mail className="w-4 h-4 text-purple-400/60 absolute left-3 top-3" />
                 </div>
