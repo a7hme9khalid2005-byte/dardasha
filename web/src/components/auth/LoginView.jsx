@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Eye, EyeOff, Loader2, Sparkles, MessageCircle, Shield, Zap, Lock, Mail, Users, 
+  Eye, EyeOff, Loader2, Sparkles, MessageCircle, Shield, Zap, Lock, Mail, Users, User,
   QrCode, RefreshCw, Smartphone, CheckCircle, ShieldAlert
 } from 'lucide-react';
 import RegisterModal from './RegisterModal';
