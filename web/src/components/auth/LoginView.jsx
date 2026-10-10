@@ -25,39 +25,37 @@ export default function LoginView({ onLogin, onRegister }) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
 
-  // Generate QR Session when switching to QR mode
+  // 1. Generate QR Session ONLY once when switching to QR mode
   useEffect(() => {
-    let pollInterval;
-    let countdownInterval;
-
     if (authMode === 'qr') {
       initQrSession();
-
-      // Poll check every 1500ms
-      pollInterval = setInterval(async () => {
-        if (qrSessionId && qrStatus !== 'confirmed') {
-          try {
-            const check = await api.checkQrSession(qrSessionId);
-            if (check.status === 'confirmed' && check.token) {
-              setQrStatus('confirmed');
-              clearInterval(pollInterval);
-              localStorage.setItem('dardasha_token', check.token);
-              // Trigger app reload or state update
-              window.location.reload();
-            } else if (check.status === 'expired') {
-              setQrStatus('expired');
-              clearInterval(pollInterval);
-            }
-          } catch (err) {
-            console.warn('QR poll warn:', err);
-          }
-        }
-      }, 1500);
-
-      countdownInterval = setInterval(() => {
-        setQrTimer(prev => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
     }
+  }, [authMode]);
+
+  // 2. Poll for QR status independently without re-triggering session generation
+  useEffect(() => {
+    if (authMode !== 'qr' || !qrSessionId || qrStatus === 'confirmed') return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const check = await api.checkQrSession(qrSessionId);
+        if (check.status === 'confirmed' && check.token) {
+          setQrStatus('confirmed');
+          clearInterval(pollInterval);
+          localStorage.setItem('dardasha_token', check.token);
+          window.location.reload();
+        } else if (check.status === 'expired') {
+          setQrStatus('expired');
+          clearInterval(pollInterval);
+        }
+      } catch (err) {
+        console.warn('QR poll warn:', err);
+      }
+    }, 1500);
+
+    const countdownInterval = setInterval(() => {
+      setQrTimer(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
 
     return () => {
       clearInterval(pollInterval);
@@ -324,6 +322,11 @@ export default function LoginView({ onLogin, onRegister }) {
                         <img
                           src={qrCodeUrl}
                           alt="Dardasha Web QR Login"
+                          onError={(e) => {
+                            if (qrSessionId && !e.target.src.includes('quickchart.io')) {
+                              e.target.src = `https://quickchart.io/qr?text=${encodeURIComponent(`dardasha://login?session=${qrSessionId}`)}&size=200`;
+                            }
+                          }}
                           className="w-48 h-48 rounded-xl border-2 border-cyan-400/40 shadow-glow-accent object-contain p-1 bg-white"
                         />
                         {qrStatus === 'expired' && (
