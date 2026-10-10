@@ -45,13 +45,15 @@ router.post('/register/send-otp', async (req, res) => {
       createdAt: new Date().toISOString(),
     });
 
-    await sendOtpEmail(cleanEmail, code, firstName || 'عضو جديد');
+    // Dispatch OTP email immediately in background so UI transition is instant
+    sendOtpEmail(cleanEmail, code, firstName || 'عضو جديد').catch(err => {
+      console.error('Background OTP send error:', err);
+    });
 
     res.json({
       success: true,
       message: 'تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح',
       email: cleanEmail,
-      debugCode: code,
     });
   } catch (err) {
     console.error('Send register OTP error:', err);
@@ -273,13 +275,15 @@ router.post('/forgot-password', async (req, res) => {
       createdAt: new Date().toISOString(),
     });
 
-    await sendOtpEmail(cleanEmail, code, user.firstName);
+    // Dispatch OTP email immediately in background so UI transition is instant
+    sendOtpEmail(cleanEmail, code, user.firstName).catch(err => {
+      console.error('Background OTP send error:', err);
+    });
 
     res.json({
       success: true,
       message: 'تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح',
       email: cleanEmail,
-      debugCode: code,
     });
   } catch (err) {
     console.error('Forgot password error:', err);

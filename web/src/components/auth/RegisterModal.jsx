@@ -712,12 +712,6 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
                 </span>
               </div>
 
-              {debugOtpCode && (
-                <div className="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl text-xs text-purple-200 font-medium">
-                  💡 رمز التحقق السريع: <span className="font-mono font-bold text-cyan-300 text-sm">{debugOtpCode}</span>
-                </div>
-              )}
-
               {/* 6 Digit Glowing Boxes */}
               <div className="flex justify-center items-center gap-2 sm:gap-2.5 dir-ltr" onPaste={handlePasteOtp}>
                 {otpDigits.map((digit, index) => (
