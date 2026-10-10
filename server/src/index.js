@@ -40,6 +40,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 
+// Trust first proxy (Render / Cloudflare / reverse proxy)
+app.set('trust proxy', 1);
+
 // 1. Security Headers via Helmet (Blocks XSS, Clickjacking, MIME-sniffing)
 app.use(helmet({
   contentSecurityPolicy: false,

@@ -43,11 +43,11 @@ export function noSqlSanitizer(req, res, next) {
  */
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 12,
+  max: 35,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    error: 'تم تجاوز عدد محاولات الدخول المسموح بها. لحمايتك، تم تعليق المحاولات لمدة 15 دقيقة.',
+    error: 'تم تجاوز عدد محاولات الدخول المسموح بها. لحمايتك، يرجى الانتظار قليلاً قبل إعادة المحاولة.',
     retryAfterMinutes: 15,
   },
 });
@@ -55,29 +55,32 @@ export const loginLimiter = rateLimit({
 /**
  * 3. Rate Limiter for OTP & Password Reset
  * Prevents email spamming, SMS/OTP bombing, and code guessing attacks.
- * Max 5 requests per 10 minutes per IP.
+ * Max 10 requests per 10 minutes per IP.
  */
 export const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 6,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    error: 'تم طلب عدد كبير من رموز التحقق مؤخراً. يرجى الانتظار 10 دقائق قبل إعادة المحاولة.',
+    error: 'تم طلب عدد كبير من رموز التحقق مؤخراً. يرجى الانتظار قليلاً قبل إعادة المحاولة.',
     retryAfterMinutes: 10,
   },
 });
 
 /**
  * 4. General API Rate Limiter
- * Shields server against DDoS and flooding attacks.
- * Max 400 requests per 15 minutes per IP.
+ * Shields server against DDoS and flooding attacks while allowing normal usage.
+ * Max 3000 requests per 15 minutes per IP, skips localhost and health checks.
  */
 export const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 450,
+  max: 3000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    return req.ip === '127.0.0.1' || req.ip === '::1' || req.path === '/health';
+  },
   message: {
     error: 'تم رصد نشاط غير معتاد من هذا العنوان. يرجى الانتظار قليلاً.',
   },
