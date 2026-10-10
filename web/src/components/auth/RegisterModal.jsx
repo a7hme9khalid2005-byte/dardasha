@@ -727,6 +727,9 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
                 <span className="font-mono font-bold text-cyan-300 text-xs bg-cyan-950/60 border border-cyan-500/40 px-3 py-1 rounded-full inline-block">
                   {formData.email}
                 </span>
+                <p className="text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-1.5 mt-2 inline-block">
+                  💡 تنبيه: إذا لم يظهر الرمز في البريد الوارد، يرجى فحص مجلد <strong>الرسائل غير المرغوب فيها (Spam / Junk)</strong>
+                </p>
               </div>
 
               {/* 6 Digit Glowing Boxes */}

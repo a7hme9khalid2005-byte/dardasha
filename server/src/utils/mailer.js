@@ -304,15 +304,21 @@ export async function sendOtpEmail(email, code, userName = '') {
       const mailer = await getTransporter();
       const htmlContent = buildOtpEmailHtml(code, userName, email);
       const mailOptions = {
-        from: `"دردشة Dardasha" <${process.env.SMTP_USER}>`,
+        from: `"Dardasha دردشة" <${process.env.SMTP_USER}>`,
         to: email,
-        subject: `رمز التحقق الخاص بك في دردشة: ${code}`,
-        text: `رمز التحقق الخاص بك في Dardasha هو: ${code} (صالح لمدة 10 دقائق)`,
+        subject: `[Dardasha] رمز التحقق الخاص بك: ${code}`,
+        text: `رمز التحقق الخاص بك في دردشة هو: ${code}\nصالح لمدة 10 دقائق فقط.`,
         html: htmlContent,
+        headers: {
+          'X-Priority': '1',
+          'X-MSMail-Priority': 'High',
+          'Importance': 'high',
+          'Priority': 'urgent',
+        },
       };
 
       const info = await mailer.sendMail(mailOptions);
-      console.log(`🚀 [OTP SENT VIA SMTP] To: ${email} | Code: [ ${code} ]`);
+      console.log(`🚀 [OTP SENT VIA SMTP] To: ${email} | Code: [ ${code} ] | ID: ${info.messageId}`);
       return { success: true, info, provider: 'smtp' };
     } catch (smtpErr) {
       console.warn('⚠️ SMTP send error:', smtpErr.message);
