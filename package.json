@@ -1,0 +1,11 @@
+{
+  "name": "dardasha",
+  "version": "1.0.0",
+  "description": "Dardasha - Social & Real-time Chat Platform (Web & Mobile)",
+  "scripts": {
+    "server": "npm --prefix server run dev",
+    "web": "npm --prefix web run dev",
+    "mobile": "npm --prefix mobile run start",
+    "build": "npm --prefix web run build"
+  }
+}
