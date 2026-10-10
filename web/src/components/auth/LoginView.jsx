@@ -82,29 +82,16 @@ export default function LoginView({ onLogin, onRegister }) {
   const handleSimulateMobileApproval = async () => {
     if (!qrSessionId) return;
     try {
-      // Simulate approving from existing session or default user
-      const users = await api.getMe().catch(() => null);
-      const approveRes = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'ahmed@dardasha.com', password: 'password123' })
-      }).then(r => r.json()).catch(() => null);
-
-      if (approveRes && approveRes.token) {
-        await fetch(`${API_BASE}/auth/qr/approve`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${approveRes.token}`
-          },
-          body: JSON.stringify({ sessionId: qrSessionId })
-        });
+      const check = await api.checkQrSession(qrSessionId);
+      if (check.status === 'confirmed' && check.token) {
         setQrStatus('confirmed');
-        localStorage.setItem('dardasha_token', approveRes.token);
+        localStorage.setItem('dardasha_token', check.token);
         setTimeout(() => window.location.reload(), 800);
+      } else {
+        alert('يرجى مسح الرمز من خلال تطبيق الهاتف للمصادقة');
       }
-    } catch (err) {
-      alert('فشل المصادقة التجريبية');
+    } catch {
+      alert('في انتظار تأكيد المصادقة من الهاتف');
     }
   };
 
@@ -260,13 +247,14 @@ export default function LoginView({ onLogin, onRegister }) {
 
               {/* MODE 1: Standard Password Login */}
               {authMode === 'password' && (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
                   <div className="relative">
                     <input
                       type="email"
                       placeholder="البريد الإلكتروني"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="off"
                       required
                       className="w-full px-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:bg-white/10 transition text-sm pl-11 text-right"
                     />
@@ -279,6 +267,7 @@ export default function LoginView({ onLogin, onRegister }) {
                       placeholder="كلمة السر (أو رمز Decoy التمويهي)"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
                       required
                       className="w-full px-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:bg-white/10 transition text-sm pl-11 text-right"
                     />
