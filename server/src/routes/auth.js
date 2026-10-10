@@ -59,7 +59,6 @@ router.post('/register/send-otp', async (req, res) => {
       success: true,
       message: 'تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح',
       email: cleanEmail,
-      code,
     });
   } catch (err) {
     console.error('Send register OTP error:', err);
@@ -316,7 +315,6 @@ router.post('/forgot-password', async (req, res) => {
       success: true,
       message: 'تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح',
       email: cleanEmail,
-      code,
     });
   } catch (err) {
     console.error('Forgot password error:', err);

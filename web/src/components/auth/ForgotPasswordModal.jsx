@@ -16,7 +16,6 @@ export default function ForgotPasswordModal({ isOpen, onClose, onPasswordResetSu
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const [debugOtpCode, setDebugOtpCode] = useState('');
 
   const inputRefs = useRef([]);
 
@@ -46,8 +45,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onPasswordResetSu
     setError('');
     setLoading(true);
     try {
-      const res = await api.forgotPassword(email);
-      if (res.code || res.debugCode) setDebugOtpCode(res.code || res.debugCode);
+      await api.forgotPassword(email);
       setStep('OTP');
       setTimer(60);
       setCanResend(false);
@@ -222,37 +220,6 @@ export default function ForgotPasswordModal({ isOpen, onClose, onPasswordResetSu
                   {email}
                 </span>
               </div>
-
-              {/* Quick Code Display & Instant 1-Click Verification */}
-              {debugOtpCode && (
-                <div className="p-3.5 bg-gradient-to-r from-cyan-950/90 via-slate-900/95 to-purple-950/90 border border-cyan-400/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-right shadow-lg animate-in fade-in zoom-in-95">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">💡</span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white">رمز التحقق السريع:</span>
-                        <span className="font-mono text-cyan-300 font-extrabold text-base tracking-widest px-2.5 py-0.5 bg-black/60 rounded-lg border border-cyan-500/40 select-all shadow-inner">
-                          {debugOtpCode}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-300 mt-1">
-                        تم إرساله لبريدك الإلكتروني، ويمكنك تعبئته فوراً بنقرة واحدة
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const digits = String(debugOtpCode).trim().split('');
-                      setOtpDigits(digits);
-                      setError('');
-                    }}
-                    className="px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold shrink-0 shadow-glow transition flex items-center gap-1.5 active:scale-95"
-                  >
-                    <span>⚡ تعبئة الكود الآن</span>
-                  </button>
-                </div>
-              )}
 
               {/* 6 Digit Glowing Boxes */}
               <div className="flex justify-center items-center gap-2 sm:gap-2.5 dir-ltr" onPaste={handlePaste}>
