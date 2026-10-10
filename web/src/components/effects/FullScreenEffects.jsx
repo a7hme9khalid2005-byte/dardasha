@@ -6,14 +6,15 @@ export default function FullScreenEffects({
   currentUser,
   activeSeasonalEffect, // 'none', 'snow', 'fireworks', 'cosmic-dust', 'matrix'
   activeEmojiEffect,
-  onClearEmojiEffect
+  onClearEmojiEffect,
+  reducedMotion = false
 }) {
 
   // Trigger Full Screen Emoji FX (Item 94)
   useEffect(() => {
     if (!activeEmojiEffect) return;
 
-    if (activeEmojiEffect === '🎉' || activeEmojiEffect === '🔥' || activeEmojiEffect === '🚀') {
+    if (!reducedMotion && (activeEmojiEffect === '🎉' || activeEmojiEffect === '🔥' || activeEmojiEffect === '🚀')) {
       confetti({
         particleCount: 120,
         spread: 90,
@@ -31,7 +32,7 @@ export default function FullScreenEffects({
 
   // Seasonal Fireworks periodic burst (Item 95)
   useEffect(() => {
-    if (activeSeasonalEffect !== 'fireworks') return;
+    if (activeSeasonalEffect !== 'fireworks' || reducedMotion) return;
 
     const interval = setInterval(() => {
       confetti({

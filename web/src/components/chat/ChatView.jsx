@@ -17,6 +17,7 @@ import E2EVerificationModal from './E2EVerificationModal';
 import SoundStickersDrawer from './SoundStickersDrawer';
 import ChatPerLockModal from './ChatPerLockModal';
 import SavedVaultView from './SavedVaultView';
+import StickerStudioModal from './StickerStudioModal';
 import { bubbleStylesCatalog } from '../themes/BubbleStudioModal';
 import { sounds } from '../../utils/soundEffects';
 
@@ -66,6 +67,7 @@ export default function ChatView({
   const [isWatchOpen, setIsWatchOpen] = useState(false);
   const [isE2EOpen, setIsE2EOpen] = useState(false); // Item 41
   const [isSoundStickersOpen, setIsSoundStickersOpen] = useState(false); // Item 69
+  const [isStickerStudioOpen, setIsStickerStudioOpen] = useState(false); // Sticker Studio & Memes
   const [isChatLockOpen, setIsChatLockOpen] = useState(false); // Item 45
   const [isVaultOpen, setIsVaultOpen] = useState(false); // Item 54
   const [lockedContactIds, setLockedContactIds] = useState(new Set(['contact-locked-sample']));
@@ -298,6 +300,28 @@ export default function ChatView({
       await api.sendMessage(selectedContact.id, tempMsg.content, { soundSticker: sticker });
     } catch (err) {
       console.warn(err);
+    }
+  };
+
+  // Sticker Studio: Send Custom Designed Sticker
+  const handleSendCustomSticker = async (sticker) => {
+    if (!selectedContact) return;
+    const tempMsg = {
+      id: 'stk-' + Date.now(),
+      senderId: currentUser.id,
+      receiverId: selectedContact.id,
+      content: `[ملصق مخصص] ${sticker.topText || ''} ${sticker.bottomText || ''}`.trim(),
+      sticker: sticker,
+      createdAt: new Date().toISOString(),
+      read: false,
+    };
+    setMessages(prev => [...prev, tempMsg]);
+    sounds.playSend();
+    triggerHaptic([40, 20]);
+    try {
+      await api.sendMessage(selectedContact.id, tempMsg.content, { sticker });
+    } catch (err) {
+      console.warn('Failed to send custom sticker:', err);
     }
   };
 
@@ -903,7 +927,7 @@ export default function ChatView({
                           /* ITEM 69: Interactive Sound Sticker */
                           <div 
                             onClick={() => {
-                              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+                              sounds.playStickerSound(msg.soundSticker.id);
                               triggerHaptic([20, 20]);
                             }}
                             className="p-3 bg-white/10 rounded-2xl border border-white/20 text-center cursor-pointer hover:scale-105 transition active:scale-95 space-y-1"
@@ -914,6 +938,27 @@ export default function ChatView({
                               <Volume2 className="w-3 h-3 text-purple-300" />
                               <span>انقر للاستماع للصوت</span>
                             </span>
+                          </div>
+                        ) : msg.sticker ? (
+                          /* Custom Sticker from Sticker Studio */
+                          <div 
+                            className="p-2.5 bg-black/40 rounded-2xl border-2 text-center overflow-hidden max-w-[210px] space-y-1"
+                            style={{ borderColor: msg.sticker.outlineColor || '#8b5cf6' }}
+                          >
+                            <div className="relative rounded-xl overflow-hidden shadow-lg border border-white/10">
+                              <img src={msg.sticker.img} alt="Custom Sticker" className="w-full h-36 object-cover" />
+                              {msg.sticker.topText && (
+                                <span className="absolute top-1 inset-x-1 text-center font-black text-white text-[11px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-black/50 px-1 py-0.5 rounded backdrop-blur-sm truncate">
+                                  {msg.sticker.topText}
+                                </span>
+                              )}
+                              {msg.sticker.bottomText && (
+                                <span className="absolute bottom-1 inset-x-1 text-center font-black text-amber-300 text-[11px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-black/50 px-1 py-0.5 rounded backdrop-blur-sm truncate">
+                                  {msg.sticker.bottomText}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-gray-400 block font-mono">ملصق استوديو دردشة ✨</span>
                           </div>
                         ) : editingMessageId === msg.id ? (
                           <div className="space-y-2">
@@ -1171,6 +1216,15 @@ export default function ChatView({
                       >
                         <Volume2 className="w-4 h-4 text-amber-400" />
                         <span>ملصق صوتي</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setShowMagicActions(false); setIsStickerStudioOpen(true); }}
+                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center gap-2 text-pink-300 transition"
+                      >
+                        <Sparkles className="w-4 h-4 text-pink-400" />
+                        <span>استوديو الملصقات</span>
                       </button>
 
                       <button
@@ -1458,6 +1512,13 @@ export default function ChatView({
         isOpen={isSoundStickersOpen}
         onClose={() => setIsSoundStickersOpen(false)}
         onSendSoundSticker={handleSendSoundSticker}
+      />
+
+      {/* In-App Sticker Studio Modal */}
+      <StickerStudioModal
+        isOpen={isStickerStudioOpen}
+        onClose={() => setIsStickerStudioOpen(false)}
+        onStickerCreated={handleSendCustomSticker}
       />
 
       {/* Item 45: Per-Chat Lock Modal */}

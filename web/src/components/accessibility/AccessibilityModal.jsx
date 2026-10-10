@@ -8,6 +8,12 @@ export default function AccessibilityModal({
   onClose,
   highContrastEnabled,
   onToggleHighContrast,
+  reducedMotion,
+  onToggleReducedMotion,
+  dyslexicFont,
+  onToggleDyslexicFont,
+  textZoom,
+  onTextZoomChange,
   onVoiceCommand
 }) {
   if (!isOpen) return null;
@@ -178,6 +184,85 @@ export default function AccessibilityModal({
               onChange={(e) => onToggleHighContrast && onToggleHighContrast(e.target.checked)}
               className="w-5 h-5 accent-yellow-400 rounded cursor-pointer mr-3"
             />
+          </div>
+
+          {/* Motion Reduction Toggle */}
+          <div className="p-4 bg-white/5 border border-cyan-500/30 rounded-2xl flex items-center justify-between">
+            <div className="space-y-1">
+              <h4 className="font-bold text-sm text-cyan-300 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                <span>تقليل الحركة والرسوم التفاعلية (Reduced Motion)</span>
+              </h4>
+              <p className="text-[11px] text-gray-300">
+                إيقاف تأثيرات الجزيئات، احتفالات الكونفيتي، والتأثيرات الموسمية لتقليل إجهاد العين ودوار الحركة.
+              </p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={reducedMotion}
+              onChange={(e) => onToggleReducedMotion && onToggleReducedMotion(e.target.checked)}
+              className="w-5 h-5 accent-cyan-400 rounded cursor-pointer mr-3"
+            />
+          </div>
+
+          {/* Dyslexic-Friendly Font Toggle */}
+          <div className="p-4 bg-white/5 border border-purple-500/30 rounded-2xl flex items-center justify-between">
+            <div className="space-y-1">
+              <h4 className="font-bold text-sm text-purple-300 flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-purple-400" />
+                <span>خط مخصص لسهولة القراءة وعسر القراءة (Dyslexia-Friendly Font)</span>
+              </h4>
+              <p className="text-[11px] text-gray-300">
+                استخدام خط عالي الوضوح والتمايز يسهل قراءة الرسائل والنصوص بدون تداخل الحروف.
+              </p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={dyslexicFont}
+              onChange={(e) => onToggleDyslexicFont && onToggleDyslexicFont(e.target.checked)}
+              className="w-5 h-5 accent-purple-400 rounded cursor-pointer mr-3"
+            />
+          </div>
+
+          {/* Adjustable Text Zoom Slider (80% - 150%) */}
+          <div className="p-4 bg-white/5 border border-emerald-500/30 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-sm text-emerald-300 flex items-center gap-1.5">
+                  <Eye className="w-4 h-4 text-emerald-400" />
+                  <span>تكبير وتصغير حجم النصوص والواجهة (Text Zoom)</span>
+                </h4>
+                <p className="text-[11px] text-gray-300 mt-0.5">
+                  تحكم دقيق بحجم الخطوط عبر المنصة بنسبة تتراوح بين 80% وحتى 150%
+                </p>
+              </div>
+              <span className="font-mono text-xs font-bold px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl">
+                {textZoom || 100}%
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <span className="text-[11px] font-mono text-gray-400">80%</span>
+              <input
+                type="range"
+                min="80"
+                max="150"
+                step="5"
+                value={textZoom || 100}
+                onChange={(e) => onTextZoomChange && onTextZoomChange(Number(e.target.value))}
+                className="flex-1 accent-emerald-400 cursor-pointer h-2 bg-white/10 rounded-lg"
+              />
+              <span className="text-[11px] font-mono text-gray-400">150%</span>
+              <button
+                type="button"
+                onClick={() => onTextZoomChange && onTextZoomChange(100)}
+                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-gray-200 text-[10px] font-bold rounded-lg transition"
+              >
+                إعادة ضبط (100%)
+              </button>
+            </div>
           </div>
 
           {/* Item 100: Haptic Feedback Patterns */}

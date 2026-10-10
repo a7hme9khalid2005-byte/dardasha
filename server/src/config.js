@@ -16,9 +16,9 @@ export const MONGODB_URI = process.env.MONGODB_URI || '';
 export const UPLOAD_DIR = path.join(__dirname, '../uploads');
 export const DATA_DIR = path.join(__dirname, '../data');
 
-// Email configurations (Default to Ethereal / Console mode for local testing)
+// Email configurations strictly sourced from environment variables (.env)
 export const SMTP_CONFIG = {
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587', 10),
   secure: process.env.SMTP_SECURE === 'true',
   auth: {

@@ -76,6 +76,15 @@ export default function App() {
   const [highContrastEnabled, setHighContrastEnabled] = useState(
     localStorage.getItem('dardasha_high_contrast') === 'true'
   ); // Item 99 (في حال قام المستخدم بتفعيلها)
+  const [reducedMotion, setReducedMotion] = useState(
+    localStorage.getItem('dardasha_reduced_motion') === 'true'
+  );
+  const [dyslexicFont, setDyslexicFont] = useState(
+    localStorage.getItem('dardasha_dyslexic_font') === 'true'
+  );
+  const [textZoom, setTextZoom] = useState(
+    Number(localStorage.getItem('dardasha_text_zoom')) || 100
+  );
   const [activeSeasonalEffect, setActiveSeasonalEffect] = useState(
     localStorage.getItem('dardasha_seasonal_effect') || 'cosmic-dust'
   ); // Item 95
@@ -87,10 +96,25 @@ export default function App() {
   useEffect(() => {
     checkSession();
 
-    // Initialize custom font if saved (Item 87)
-    const savedFont = localStorage.getItem('dardasha_font_family');
-    if (savedFont) {
-      document.documentElement.style.fontFamily = `"${savedFont}", -apple-system, sans-serif`;
+    // Initialize custom font or dyslexic font if saved
+    if (localStorage.getItem('dardasha_dyslexic_font') === 'true') {
+      document.documentElement.style.fontFamily = '"OpenDyslexic", "Comic Sans MS", "Arial", sans-serif';
+    } else {
+      const savedFont = localStorage.getItem('dardasha_font_family');
+      if (savedFont) {
+        document.documentElement.style.fontFamily = `"${savedFont}", -apple-system, sans-serif`;
+      }
+    }
+
+    // Initialize text zoom if saved
+    const savedZoom = Number(localStorage.getItem('dardasha_text_zoom'));
+    if (savedZoom && savedZoom !== 100) {
+      document.documentElement.style.fontSize = `${savedZoom}%`;
+    }
+
+    // Initialize reduced motion if saved
+    if (localStorage.getItem('dardasha_reduced_motion') === 'true') {
+      document.documentElement.classList.add('reduce-motion');
     }
 
     // Initialize OLED true black if saved (Item 92)
@@ -215,6 +239,37 @@ export default function App() {
     }
   };
 
+  const handleToggleReducedMotion = (val) => {
+    setReducedMotion(val);
+    localStorage.setItem('dardasha_reduced_motion', val);
+    if (val) {
+      document.documentElement.classList.add('reduce-motion');
+    } else {
+      document.documentElement.classList.remove('reduce-motion');
+    }
+  };
+
+  const handleToggleDyslexicFont = (val) => {
+    setDyslexicFont(val);
+    localStorage.setItem('dardasha_dyslexic_font', val);
+    if (val) {
+      document.documentElement.style.fontFamily = '"OpenDyslexic", "Comic Sans MS", "Arial", sans-serif';
+    } else {
+      const savedFont = localStorage.getItem('dardasha_font_family');
+      if (savedFont) {
+        document.documentElement.style.fontFamily = `"${savedFont}", -apple-system, sans-serif`;
+      } else {
+        document.documentElement.style.fontFamily = '';
+      }
+    }
+  };
+
+  const handleTextZoomChange = (val) => {
+    setTextZoom(val);
+    localStorage.setItem('dardasha_text_zoom', val);
+    document.documentElement.style.fontSize = `${val}%`;
+  };
+
   const handleCommandAction = (action, payload) => {
     switch (action) {
       case 'open_chest':
@@ -285,6 +340,7 @@ export default function App() {
         activeSeasonalEffect={activeSeasonalEffect}
         activeEmojiEffect={activeEmojiEffect}
         onClearEmojiEffect={() => setActiveEmojiEffect(null)}
+        reducedMotion={reducedMotion}
       />
 
       {/* Primary Navigation */}
@@ -565,6 +621,12 @@ export default function App() {
           setHighContrastEnabled(val);
           localStorage.setItem('dardasha_high_contrast', val);
         }}
+        reducedMotion={reducedMotion}
+        onToggleReducedMotion={handleToggleReducedMotion}
+        dyslexicFont={dyslexicFont}
+        onToggleDyslexicFont={handleToggleDyslexicFont}
+        textZoom={textZoom}
+        onTextZoomChange={handleTextZoomChange}
         onVoiceCommand={handleVoiceCommand}
       />
 

@@ -5,6 +5,11 @@ web/node_modules/
 
 # Environment Variables (Keep secrets secure)
 .env
+.env*
+*.env
+**/.env
+server/.env
+web/.env
 .env.local
 .env.*.local
 

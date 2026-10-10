@@ -5,6 +5,7 @@ import {
   MapPin, Check, Search, ChevronDown, RefreshCw, KeyRound, AlertCircle
 } from 'lucide-react';
 import { searchCountries, BASE_COUNTRIES } from '../../data/countriesData';
+import { AVATAR_PRESETS } from '../../data/avatarPresets';
 import { api } from '../../services/api';
 
 const monthsArabic = [
@@ -394,6 +395,44 @@ export default function RegisterModal({ isOpen, onClose, onRegisterSuccess }) {
                   onChange={handleFileChange}
                   className="hidden"
                 />
+              </div>
+
+              {/* 12 Avatar Presets Selection Grid */}
+              <div className="p-3.5 bg-white/[0.03] border border-white/10 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>أو اختر صورة رمزية من 12 قالباً مخصصاً:</span>
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold">
+                    12 قالباً جاهزاً
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {AVATAR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setAvatarPreview(preset.url)}
+                      title={preset.name}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all p-0.5 group hover:scale-105 ${
+                        avatarPreview === preset.url
+                          ? 'border-cyan-400 ring-2 ring-cyan-400/50 shadow-glow bg-cyan-950/40'
+                          : 'border-white/10 hover:border-purple-400/50 bg-white/5 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover rounded-lg" />
+                      {avatarPreview === preset.url && (
+                        <div className="absolute inset-0 bg-cyan-500/30 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white bg-cyan-600 rounded-full p-0.5 shadow-md" />
+                        </div>
+                      )}
+                      <span className="absolute bottom-0 inset-x-0 bg-black/70 text-[9px] text-white truncate px-0.5 opacity-0 group-hover:opacity-100 transition">
+                        {preset.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Names: First, Middle, Last */}

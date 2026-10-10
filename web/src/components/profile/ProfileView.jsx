@@ -10,14 +10,9 @@ import { api } from '../../services/api';
 import DigitalCardModal from './DigitalCardModal';
 import MysteryBoxModal from '../gamification/MysteryBoxModal';
 import { sounds } from '../../utils/soundEffects';
+import { AVATAR_PRESETS } from '../../data/avatarPresets';
 
-const avatarPresets = [
-  'https://api.dicebear.com/7.x/initials/svg?seed=Ahmed&backgroundColor=8b5cf6',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=cyber1&backgroundColor=06b6d4',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=ninja&backgroundColor=7c3aed',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Sarah&backgroundColor=ec4899',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=star&backgroundColor=10b981',
-];
+const avatarPresets = AVATAR_PRESETS.map(p => p.url);
 
 const avatarFrames = [
   { id: 'none', label: 'بدون إطار', ringClass: 'border-white/20' },
@@ -1030,6 +1025,39 @@ export default function ProfileView({ currentUser, onProfileUpdated, onBack }) {
                     onChange={(e) => setSocialLinks({ ...socialLinks, instagram: e.target.value })}
                     className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-left"
                   />
+                </div>
+              </div>
+
+              {/* 12 Avatar Presets Selector */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-purple-300 text-right">اختر صورة الأفاتار الشخصية:</label>
+                  <span className="text-[10px] text-cyan-300 font-mono">12 قالباً مخصصاً</span>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {AVATAR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setAvatar(preset.url)}
+                      title={preset.name}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all p-0.5 group hover:scale-105 ${
+                        avatar === preset.url
+                          ? 'border-purple-400 ring-2 ring-purple-400/50 shadow-glow bg-purple-950/40'
+                          : 'border-white/10 hover:border-cyan-400/50 bg-white/5 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover rounded-lg" />
+                      {avatar === preset.url && (
+                        <div className="absolute inset-0 bg-purple-500/30 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white bg-purple-600 rounded-full p-0.5 shadow-md" />
+                        </div>
+                      )}
+                      <span className="absolute bottom-0 inset-x-0 bg-black/70 text-[9px] text-white truncate px-0.5 opacity-0 group-hover:opacity-100 transition">
+                        {preset.name}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
