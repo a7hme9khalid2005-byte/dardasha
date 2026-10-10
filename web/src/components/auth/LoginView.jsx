@@ -25,6 +25,43 @@ export default function LoginView({ onLogin, onRegister }) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
 
+  // Mobile App Installation (PWA) Handler
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    if (typeof window !== 'undefined' && window.location.search.includes('install=true')) {
+      setShowInstallBanner(true);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setShowInstallBanner(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIos) {
+        alert('📱 لتثبيت تطبيق دردشة على آيفون:\n1. اضغط على زر المشاركة (Share ⎋) أسفل المتصفح.\n2. اختر "إضافة إلى الصفحة الرئيسية (Add to Home Screen ➕)".');
+      } else {
+        alert('📱 لتثبيت تطبيق دردشة:\nاضغط على خيارات المتصفح (⋮) في الأعلى واختر "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية".');
+      }
+    }
+  };
+
   // 1. Generate QR Session ONLY once when switching to QR mode
   useEffect(() => {
     if (authMode === 'qr') {
@@ -117,10 +154,14 @@ export default function LoginView({ onLogin, onRegister }) {
     await onRegister(userData);
   };
 
-  // QR Code Image URL using dynamic QR API with clean vector SVG
-  const qrCodeUrl = qrSessionId
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`dardasha://login?session=${qrSessionId}`)}&bgcolor=0f172a&color=06b6d4&margin=10`
-    : '';
+  // Dynamic App URL for standard phone camera scanning & mobile PWA installation
+  const appInstallUrl = (typeof window !== 'undefined')
+    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://192.168.0.188:3000?install=true'
+        : `${window.location.origin}?install=true`)
+    : 'https://github.com/a7hme9khalid2005-byte/dardasha';
+
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(appInstallUrl)}&bgcolor=0f172a&color=06b6d4&margin=10`;
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-white flex flex-col justify-between relative overflow-hidden selection:bg-purple-500 selection:text-white">
@@ -225,8 +266,8 @@ export default function LoginView({ onLogin, onRegister }) {
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    <QrCode className="w-3.5 h-3.5" />
-                    <span>مسح كود QR الفوري (113)</span>
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>تثبيت التطبيق عبر QR 📱</span>
                   </button>
                 </div>
               </div>
@@ -240,6 +281,26 @@ export default function LoginView({ onLogin, onRegister }) {
               {successNotice && (
                 <div className="mb-4 p-3 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-semibold text-right">
                   ✅ {successNotice}
+                </div>
+              )}
+
+              {/* PWA Mobile Direct Install Banner */}
+              {showInstallBanner && (
+                <div className="mb-4 p-3.5 bg-gradient-to-r from-blue-950/80 via-indigo-950/80 to-purple-950/80 border border-cyan-400/50 rounded-2xl flex items-center justify-between gap-3 text-right shadow-lg animate-fade-in">
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                      <span>📲</span> تثبيت تطبيق دردشة على هاتفك
+                    </h4>
+                    <p className="text-[11px] text-gray-300 mt-0.5">
+                      سرعة فائقة ووصول فوري من شاشتك الرئيسية
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleInstallApp}
+                    className="px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold shrink-0 shadow-glow transition active:scale-95"
+                  >
+                    تثبيت الآن
+                  </button>
                 </div>
               )}
 
@@ -307,79 +368,57 @@ export default function LoginView({ onLogin, onRegister }) {
                 </form>
               )}
 
-              {/* MODE 2: Item 113 - Instant Web QR Login */}
+              {/* MODE 2: Mobile App PWA Install QR Code */}
               {authMode === 'qr' && (
                 <div className="space-y-4 text-center animate-in zoom-in-95">
                   <div className="p-4 bg-[#0a0f1d] rounded-2xl border border-cyan-500/30 flex flex-col items-center justify-center space-y-3">
                     
-                    {qrLoading ? (
-                      <div className="w-48 h-48 flex flex-col items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mb-2" />
-                        <span className="text-xs text-gray-400">توليد رمز الجلسة المشفر...</span>
-                      </div>
-                    ) : (
-                      <div className="relative group">
-                        <img
-                          src={qrCodeUrl}
-                          alt="Dardasha Web QR Login"
-                          onError={(e) => {
-                            if (qrSessionId && !e.target.src.includes('quickchart.io')) {
-                              e.target.src = `https://quickchart.io/qr?text=${encodeURIComponent(`dardasha://login?session=${qrSessionId}`)}&size=200`;
-                            }
-                          }}
-                          className="w-48 h-48 rounded-xl border-2 border-cyan-400/40 shadow-glow-accent object-contain p-1 bg-white"
-                        />
-                        {qrStatus === 'expired' && (
-                          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-3 text-center">
-                            <span className="text-xs text-rose-400 font-bold mb-2">انتهت صلاحية الرمز</span>
-                            <button
-                              onClick={initQrSession}
-                              className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold flex items-center gap-1"
-                            >
-                              <RefreshCw className="w-3.5 h-3.5" />
-                              <span>تحديث الرمز</span>
-                            </button>
-                          </div>
-                        )}
-                        {qrStatus === 'confirmed' && (
-                          <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-3 text-center">
-                            <CheckCircle className="w-10 h-10 text-emerald-400 animate-bounce mb-2" />
-                            <span className="text-xs text-emerald-300 font-bold">تم تأكيد الدخول بنجاح!</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="relative group p-2 bg-white rounded-2xl shadow-xl">
+                      <img
+                        src={qrCodeUrl}
+                        alt="Dardasha Mobile App Install QR"
+                        onError={(e) => {
+                          if (!e.target.src.includes('quickchart.io')) {
+                            e.target.src = `https://quickchart.io/qr?text=${encodeURIComponent(appInstallUrl)}&size=240`;
+                          }
+                        }}
+                        className="w-52 h-52 object-contain"
+                      />
+                    </div>
 
-                    <div className="text-right w-full space-y-1 text-xs">
-                      <p className="text-gray-300 font-bold">خطوات تسجيل الدخول عبر QR:</p>
-                      <ol className="text-[11px] text-gray-400 list-decimal list-inside space-y-0.5">
-                        <li>افتح تطبيق Dardasha على هاتفك.</li>
-                        <li>انتقل إلى الإعدادات ⚙️ واضغط "مسح كود QR للمتصفح".</li>
-                        <li>وجّه الكاميرا نحو هذا الرمز لتسجيل الدخول فوراً!</li>
+                    <div className="text-right w-full space-y-2 text-xs bg-slate-900/80 p-3.5 rounded-xl border border-cyan-500/20">
+                      <p className="text-cyan-300 font-bold flex items-center gap-1.5 text-xs">
+                        <Smartphone className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <span>مسح الكود بكاميرا هاتفك لتثبيت التطبيق:</span>
+                      </p>
+                      <ol className="text-[11px] text-gray-300 list-decimal list-inside space-y-1.5 leading-relaxed">
+                        <li>افتح <strong className="text-white">كاميرا هاتفك العادية</strong> (آيفون أو أندرويد) ووجّهها نحو هذا الرمز.</li>
+                        <li>اضغط على الرابط الأصفر الذي يظهر لك في الكاميرا لفتح المنصة.</li>
+                        <li>في المتصفح: اضغط زر <strong className="text-cyan-300">"تثبيت التطبيق"</strong> ليضاف إلى شاشة هاتفك فوراً كتطبيق كامل!</li>
                       </ol>
                     </div>
 
                     <div className="flex items-center justify-between w-full pt-1 border-t border-white/10 text-[11px]">
-                      <span className="text-gray-400 font-mono">الصلاحية: {qrTimer} ثانية</span>
+                      <span className="text-gray-400 font-mono">رابط فوري لجميع الأجهزة</span>
                       <button 
                         onClick={initQrSession}
                         className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
                       >
                         <RefreshCw className="w-3 h-3" />
-                        <span>تحديث</span>
+                        <span>تحديث الرمز</span>
                       </button>
                     </div>
 
                   </div>
 
-                  {/* Quick Simulator Button for immediate testing on current device */}
+                  {/* Direct Action Button */}
                   <button
                     type="button"
-                    onClick={handleSimulateMobileApproval}
-                    className="w-full py-2.5 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5"
+                    onClick={handleInstallApp}
+                    className="w-full py-3 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs shadow-glow transition flex items-center justify-center gap-2"
                   >
-                    <Smartphone className="w-4 h-4 text-cyan-400" />
-                    <span>تجربة المصادقة السريعة الآن (Instant QR Auth)</span>
+                    <Smartphone className="w-4 h-4" />
+                    <span>تثبيت التطبيق على هذا الجهاز الآن 📲</span>
                   </button>
                 </div>
               )}
